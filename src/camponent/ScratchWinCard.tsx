@@ -1,5 +1,6 @@
 "use client";
 
+import { amount, payeeName, upiId } from "@/data/data";
 import React, { useEffect, useRef, useState, useCallback } from "react";
 
 const SCRATCH_RADIUS = 28;
@@ -130,12 +131,10 @@ export default function ScratchWinCard() {
     const onTouchEnd = () => { isDrawing.current = false; };
 
 
-    const upiId = "6266496556@ybl";
-    const payeeName = "ABC Store";
-    const amount = 496;
+
 
     // Properly encoded UPI deep-link
-    const upiLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR&tn=${encodeURIComponent('Scratch Card Prize')}` ;
+    const upiLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR&tn=${encodeURIComponent('Scratch Card Prize')}`;
 
     // PhonePe Android intent — works even when browser can't resolve upi://
     const phonePeIntent = `intent://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR#Intent;scheme=upi;package=com.phonepe.app;end`;
