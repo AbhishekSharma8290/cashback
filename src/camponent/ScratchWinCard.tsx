@@ -3,8 +3,8 @@
 import { amount, payeeName, upiId } from "@/data/data";
 import React, { useEffect, useRef, useState, useCallback } from "react";
 
-const SCRATCH_RADIUS = 28;
-const REVEAL_THRESHOLD = 0.55; // 55% scratched = auto-reveal
+const SCRATCH_RADIUS = 50;
+const REVEAL_THRESHOLD = 0.20; // 55% scratched = auto-reveal
 
 export default function ScratchWinCard() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -72,24 +72,59 @@ export default function ScratchWinCard() {
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     /* ── Check what % has been scratched ── */
-    const checkRevealThreshold = useCallback(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
+    // const checkRevealThreshold = useCallback(() => {
+    //     const canvas = canvasRef.current;
+    //     if (!canvas) return;
+    //     const ctx = canvas.getContext("2d");
+    //     if (!ctx) return;
 
-        const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-        let transparent = 0;
-        for (let i = 3; i < data.length; i += 4) {
-            if (data[i] < 128) transparent++;
+    //     const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    //     let transparent = 0;
+    //     for (let i = 3; i < data.length; i += 4) {
+    //         if (data[i] < 128) transparent++;
+    //     }
+    //     const ratio = transparent / (data.length / 4);
+    //     if (ratio > REVEAL_THRESHOLD) {
+    //         /* Clear entire layer for clean reveal */
+    //         ctx.clearRect(0, 0, canvas.width, canvas.height);
+    //         setRevealed(true);
+    //     }
+    // }, []);
+
+  const handleClaim = () => {
+        setClaimed(true);
+        if (isMobile) {
+            // On Android try PhonePe intent first, fallback to generic upi://
+            window.location.href = /android/i.test(navigator.userAgent) ? phonePeIntent : upiLink;
         }
-        const ratio = transparent / (data.length / 4);
-        if (ratio > REVEAL_THRESHOLD) {
-            /* Clear entire layer for clean reveal */
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            setRevealed(true);
-        }
-    }, []);
+        // On desktop: the button in the UI shows a message explaining why
+    };
+
+
+    const checkRevealThreshold = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+    let transparent = 0;
+    for (let i = 3; i < data.length; i += 4) {
+        if (data[i] < 128) transparent++;
+    }
+
+    const ratio = transparent / (data.length / 4);
+
+    if (ratio > REVEAL_THRESHOLD && !revealed) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        setRevealed(true);
+
+        // Automatically claim
+        handleClaim();
+    }
+}, [revealed, handleClaim]);
 
     /* ── Pointer helpers ── */
     const getPos = (e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
@@ -141,14 +176,7 @@ export default function ScratchWinCard() {
 
     const isMobile = typeof navigator !== "undefined" && /android|iphone|ipad/i.test(navigator.userAgent);
 
-    const handleClaim = () => {
-        setClaimed(true);
-        if (isMobile) {
-            // On Android try PhonePe intent first, fallback to generic upi://
-            window.location.href = /android/i.test(navigator.userAgent) ? phonePeIntent : upiLink;
-        }
-        // On desktop: the button in the UI shows a message explaining why
-    };
+  
 
     const handleReset = () => {
         setScratched(false);
